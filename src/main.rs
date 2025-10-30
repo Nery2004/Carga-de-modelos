@@ -130,14 +130,14 @@ fn main() {
     let mut scale = 100.0f32;
 
     // Cargar el modelo de la nave
-    let obj = match Obj::load("assets/nave2.obj") {
+    let obj = match Obj::load("assets/models/CazaTie.obj") {
         Ok(obj) => {
-            println!("¡Modelo nave.obj cargado exitosamente!");
+            println!("¡Modelo CazaTie.obj cargado exitosamente!");
             obj
         },
         Err(e) => {
-            eprintln!("Error cargando nave.obj: {:?}", e);
-            eprintln!("Asegúrate de que el archivo assets/nave.obj existe");
+            eprintln!("Error cargando CazaTie.obj: {:?}", e);
+            eprintln!("Asegúrate de que el archivo assets/models/CazaTie.obj existe");
             return;
         }
     };
