@@ -17,7 +17,7 @@ use vertex::Vertex;
 use obj::Obj;
 use triangle::triangle;
 use shaders::vertex_shader;
-
+use color::Color;
 
 pub struct Uniforms {
     model_matrix: Mat4,
@@ -61,40 +61,43 @@ fn create_model_matrix(translation: Vec3, scale: f32, rotation: Vec3) -> Mat4 {
     transform_matrix * rotation_matrix
 }
 
-fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex]) {
-    // Vertex Shader Stage
-    let mut transformed_vertices = Vec::with_capacity(vertex_array.len());
-    for vertex in vertex_array {
+fn render_nave(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertices: &[Vertex], indices: &[u32]) {
+    
+    // Vertex Shader Stage - transformar todos los vértices
+    let mut transformed_vertices = Vec::with_capacity(vertices.len());
+    for vertex in vertices {
         let transformed = vertex_shader(vertex, uniforms);
         transformed_vertices.push(transformed);
     }
 
-    // Primitive Assembly Stage
-    let mut triangles = Vec::new();
-    for i in (0..transformed_vertices.len()).step_by(3) {
-        if i + 2 < transformed_vertices.len() {
-            triangles.push([
-                transformed_vertices[i].clone(),
-                transformed_vertices[i + 1].clone(),
-                transformed_vertices[i + 2].clone(),
-            ]);
-        }
-    }
+    // Recorrer manualmente las caras usando los índices
+    // Cada 3 índices forman un triángulo
+    for triangle_idx in (0..indices.len()).step_by(3) {
+        if triangle_idx + 2 < indices.len() {
+            let i1 = indices[triangle_idx] as usize;
+            let i2 = indices[triangle_idx + 1] as usize;
+            let i3 = indices[triangle_idx + 2] as usize;
 
-    // Rasterization Stage
-    let mut fragments = Vec::new();
-    for tri in &triangles {
-        fragments.extend(triangle(&tri[0], &tri[1], &tri[2]));
-    }
+            // Verificar que los índices estén dentro del rango
+            if i1 < transformed_vertices.len() && i2 < transformed_vertices.len() && i3 < transformed_vertices.len() {
+                let v1 = &transformed_vertices[i1];
+                let v2 = &transformed_vertices[i2];
+                let v3 = &transformed_vertices[i3];
 
-    // Fragment Processing Stage
-    for fragment in fragments {
-        let x = fragment.position.x as usize;
-        let y = fragment.position.y as usize;
-        if x < framebuffer.width && y < framebuffer.height {
-            let color = fragment.color.to_hex();
-            framebuffer.set_current_color(color);
-            framebuffer.point(x, y, fragment.depth);
+                // Dibujar el triángulo
+                let fragments = triangle(v1, v2, v3);
+                
+                // Procesar fragmentos
+                for fragment in fragments {
+                    let x = fragment.position.x as usize;
+                    let y = fragment.position.y as usize;
+                    if x < framebuffer.width && y < framebuffer.height {
+                        let color = fragment.color.to_hex();
+                        framebuffer.set_current_color(color);
+                        framebuffer.point(x, y, fragment.depth);
+                    }
+                }
+            }
         }
     }
 }
@@ -108,7 +111,7 @@ fn main() {
 
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
     let mut window = Window::new(
-        "Rust Graphics - Renderer Example",
+        "Proyecto 1 - Nave Espacial",
         window_width,
         window_height,
         WindowOptions::default(),
@@ -118,14 +121,29 @@ fn main() {
     window.set_position(500, 500);
     window.update();
 
-    framebuffer.set_background_color(0x333355);
-
-    let mut translation = Vec3::new(300.0, 200.0, 0.0);
+    // Configurar colores
+    framebuffer.set_background_color(0x001122); // Fondo negro para el espacio
+    
+    // Parámetros de transformación
+    let mut translation = Vec3::new(400.0, 300.0, 0.0); // Centrar en pantalla
     let mut rotation = Vec3::new(0.0, 0.0, 0.0);
     let mut scale = 100.0f32;
 
-    let obj = Obj::load("assets/models/model.obj").expect("Failed to load obj");
-    let vertex_arrays = obj.get_vertex_array(); 
+    // Cargar el modelo de la nave
+    let obj = match Obj::load("assets/nave2.obj") {
+        Ok(obj) => {
+            println!("¡Modelo nave.obj cargado exitosamente!");
+            obj
+        },
+        Err(e) => {
+            eprintln!("Error cargando nave.obj: {:?}", e);
+            eprintln!("Asegúrate de que el archivo assets/nave.obj existe");
+            return;
+        }
+    };
+
+    let (vertices, indices) = obj.get_vertex_and_index_arrays();
+    println!("Nave cargada: {} vértices, {} triángulos", vertices.len(), indices.len() / 3);
 
     while window.is_open() {
         if window.is_key_down(Key::Escape) {
@@ -134,57 +152,75 @@ fn main() {
 
         handle_input(&window, &mut translation, &mut rotation, &mut scale);
 
+        // Limpiar framebuffer
         framebuffer.clear();
 
+        // Crear matriz de transformación
         let model_matrix = create_model_matrix(translation, scale, rotation);
         let uniforms = Uniforms { model_matrix };
 
-        framebuffer.set_current_color(0xFFDDDD);
-        render(&mut framebuffer, &uniforms, &vertex_arrays);
+        // Renderizar la nave
+        framebuffer.set_current_color(0xFFDD44); // Color blanco para la nave
+        render_nave(&mut framebuffer, &uniforms, &vertices, &indices);
 
+        // Actualizar ventana
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
             .unwrap();
 
         std::thread::sleep(frame_delay);
     }
+
+    println!("¡Renderizado completado!");
 }
 
 fn handle_input(window: &Window, translation: &mut Vec3, rotation: &mut Vec3, scale: &mut f32) {
+    let move_speed = 5.0;
+    let rotation_speed = PI / 30.0;
+    let scale_speed = 2.0;
+
+    // Movimiento
     if window.is_key_down(Key::Right) {
-        translation.x += 10.0;
+        translation.x += move_speed;
     }
     if window.is_key_down(Key::Left) {
-        translation.x -= 10.0;
+        translation.x -= move_speed;
     }
     if window.is_key_down(Key::Up) {
-        translation.y -= 10.0;
+        translation.y -= move_speed;
     }
     if window.is_key_down(Key::Down) {
-        translation.y += 10.0;
+        translation.y += move_speed;
     }
+
+    // Escala
     if window.is_key_down(Key::S) {
-        *scale += 2.0;
+        *scale += scale_speed;
     }
     if window.is_key_down(Key::A) {
-        *scale -= 2.0;
+        *scale -= scale_speed;
+        if *scale < 1.0 {
+            *scale = 1.0;
+        }
     }
+
+    // Rotación
     if window.is_key_down(Key::Q) {
-        rotation.x -= PI / 10.0;
+        rotation.x -= rotation_speed;
     }
     if window.is_key_down(Key::W) {
-        rotation.x += PI / 10.0;
+        rotation.x += rotation_speed;
     }
     if window.is_key_down(Key::E) {
-        rotation.y -= PI / 10.0;
+        rotation.y -= rotation_speed;
     }
     if window.is_key_down(Key::R) {
-        rotation.y += PI / 10.0;
+        rotation.y += rotation_speed;
     }
     if window.is_key_down(Key::T) {
-        rotation.z -= PI / 10.0;
+        rotation.z -= rotation_speed;
     }
     if window.is_key_down(Key::Y) {
-        rotation.z += PI / 10.0;
+        rotation.z += rotation_speed;
     }
 }
