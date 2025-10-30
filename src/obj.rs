@@ -59,4 +59,50 @@ impl Obj {
 
         vertices
     }
+
+    // Nuevo método para obtener vértices e índices por separado
+    // Esto es necesario para recorrer manualmente las caras como pide el ejercicio
+    pub fn get_vertex_and_index_arrays(&self) -> (Vec<Vertex>, Vec<u32>) {
+        let mut all_vertices = Vec::new();
+        let mut all_indices = Vec::new();
+        let mut vertex_offset = 0u32;
+
+        for mesh in &self.meshes {
+            // Agregar todos los vértices únicos de este mesh
+            for i in 0..mesh.vertices.len() {
+                let position = mesh.vertices[i];
+                let normal = mesh.normals.get(i)
+                    .cloned()
+                    .unwrap_or(Vec3::new(0.0, 1.0, 0.0));
+                let tex_coords = mesh.texcoords.get(i)
+                    .cloned()
+                    .unwrap_or(Vec2::new(0.0, 0.0));
+
+                all_vertices.push(Vertex::new(position, normal, tex_coords));
+            }
+
+            // Agregar los índices ajustados por el offset
+            for &index in &mesh.indices {
+                all_indices.push(index + vertex_offset);
+            }
+
+            vertex_offset += mesh.vertices.len() as u32;
+        }
+
+        (all_vertices, all_indices)
+    }
+
+    // Método para obtener información del modelo
+    pub fn get_model_info(&self) -> String {
+        let total_vertices: usize = self.meshes.iter().map(|m| m.vertices.len()).sum();
+        let total_indices: usize = self.meshes.iter().map(|m| m.indices.len()).sum();
+        let total_triangles = total_indices / 3;
+
+        format!(
+            "Modelo cargado:\n- {} meshes\n- {} vértices\n- {} triángulos",
+            self.meshes.len(),
+            total_vertices,
+            total_triangles
+        )
+    }
 }
