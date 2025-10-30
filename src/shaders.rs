@@ -41,4 +41,3 @@ pub fn vertex_shader(vertex: &Vertex, uniforms: &Uniforms) -> Vertex {
     transformed_normal,
   }
 }
-
