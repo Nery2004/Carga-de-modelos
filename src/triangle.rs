@@ -21,7 +21,7 @@ pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
 
   let (min_x, min_y, max_x, max_y) = calculate_bounding_box(&a, &b, &c);
 
-  let light_dir = Vec3::new(0.0, 0.0, -1.0);
+  let light_dir = Vec3::new(0.3, -0.5, -1.0).normalize(); // Luz diagonal
 
   let triangle_area = edge_function(&a, &b, &c);
 
@@ -46,7 +46,7 @@ pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
         let intensity = dot(&normal, &light_dir).max(0.0);
 
         // Create a gray color and apply lighting
-        let base_color = Color::new(100, 100, 100); // Medium gray
+        let base_color = Color::new(255, 215, 0); // Medium gray
         let lit_color = base_color * intensity;
 
         // Interpolate depth
@@ -81,5 +81,3 @@ fn barycentric_coordinates(p: &Vec3, a: &Vec3, b: &Vec3, c: &Vec3, area: f32) ->
 fn edge_function(a: &Vec3, b: &Vec3, c: &Vec3) -> f32 {
     (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x)
 }
-
-
