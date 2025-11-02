@@ -1,9 +1,13 @@
 [package]
-name = "Carga_de_modelos"
+name = "proyecto_nave"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
 nalgebra-glm = "0.18"
-tobj = "3.2"
-minifb = "0.22"
+minifb = "0.27"
+tobj = "4.0"
+
+[profile.release]
+opt-level = 3
+lto = true

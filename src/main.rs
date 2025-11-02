@@ -1,5 +1,5 @@
 use nalgebra_glm::{Vec3, Mat4};
-use minifb::{Key, Window, WindowOptions};
+use minifb::{Key, Window, WindowOptions, MouseButton, MouseMode};
 use std::time::Duration;
 use std::f32::consts::PI;
 
@@ -130,14 +130,14 @@ fn main() {
     let mut scale = 100.0f32;
 
     // Cargar el modelo de la nave
-    let obj = match Obj::load("assets/models/CazaTie.obj") {
+    let obj = match Obj::load("assets/CazaTie.obj") {
         Ok(obj) => {
             println!("¡Modelo CazaTie.obj cargado exitosamente!");
             obj
         },
         Err(e) => {
             eprintln!("Error cargando CazaTie.obj: {:?}", e);
-            eprintln!("Asegúrate de que el archivo assets/models/CazaTie.obj existe");
+            eprintln!("Asegúrate de que el archivo assets/CazaTie.obj existe");
             return;
         }
     };
@@ -145,9 +145,30 @@ fn main() {
     let (vertices, indices) = obj.get_vertex_and_index_arrays();
     println!("Nave cargada: {} vértices, {} triángulos", vertices.len(), indices.len() / 3);
 
+    // Variables para el control del mouse
+    let mut last_mouse_pos: Option<(f32, f32)> = None;
+    let mouse_sensitivity = 0.005;
+
     while window.is_open() {
         if window.is_key_down(Key::Escape) {
             break;
+        }
+
+        // Manejar rotación con el mouse
+        if let Some((mx, my)) = window.get_mouse_pos(MouseMode::Clamp) {
+            if window.get_mouse_down(MouseButton::Left) {
+                if let Some((last_x, last_y)) = last_mouse_pos {
+                    let delta_x = mx - last_x;
+                    let delta_y = my - last_y;
+                    
+                    // Rotar el modelo basado en el movimiento del mouse
+                    rotation.y += delta_x * mouse_sensitivity; // rotación horizontal (yaw)
+                    rotation.x += delta_y * mouse_sensitivity; // rotación vertical (pitch)
+                }
+                last_mouse_pos = Some((mx, my));
+            } else {
+                last_mouse_pos = None;
+            }
         }
 
         handle_input(&window, &mut translation, &mut rotation, &mut scale);
