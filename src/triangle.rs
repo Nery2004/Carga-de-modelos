@@ -21,7 +21,7 @@ pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
 
   let (min_x, min_y, max_x, max_y) = calculate_bounding_box(&a, &b, &c);
 
-  let light_dir = Vec3::new(0.3, -0.5, -1.0).normalize(); // Luz diagonal
+  let light_dir = Vec3::new(0.0, 0.0, -1.0).normalize(); // Luz frontal más suave
 
   let triangle_area = edge_function(&a, &b, &c);
 
@@ -42,11 +42,13 @@ pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
         let normal = v1.transformed_normal;
         let normal = normal.normalize();
 
-        // Calculate lighting intensity
-        let intensity = dot(&normal, &light_dir).max(0.0);
+        // Calculate lighting intensity with ambient light
+        let ambient = 0.5; // Luz ambiente para iluminación más pareja
+        let diffuse = dot(&normal, &light_dir).max(0.0);
+        let intensity = (ambient + diffuse * 0.5).min(1.0); // Mezcla ambiente + difusa
 
         // Create a gray color and apply lighting
-        let base_color = Color::new(255, 215, 0); // Medium gray
+        let base_color = Color::new(140, 140, 140); // Gris medio
         let lit_color = base_color * intensity;
 
         // Interpolate depth
