@@ -45,11 +45,11 @@ pub fn triangle(v1: &Vertex, v2: &Vertex, v3: &Vertex) -> Vec<Fragment> {
         // Calculate lighting intensity with ambient light
         let ambient = 0.5; // Luz ambiente para iluminación más pareja
         let diffuse = dot(&normal, &light_dir).max(0.0);
-        let intensity = (ambient + diffuse * 0.5).min(1.0); // Mezcla ambiente + difusa
+        let intensity = ambient + diffuse * 0.5; // Mezcla ambiente + difusa
 
         // Create a gray color and apply lighting
         let base_color = Color::new(140, 140, 140); // Gris medio
-        let lit_color = base_color * intensity;
+        let lit_color = base_color * intensity.clamp(0.0, 1.0);
 
         // Interpolate depth
         // let depth = a.z * w1 + b.z * w2 + c.z * w3;
