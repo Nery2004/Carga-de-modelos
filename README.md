@@ -1,114 +1,126 @@
-# Lab 4: Carga de modelos
+# Renderizador 3D de Modelos OBJ en Rust
 
-Un renderizador de software 3D implementado en Rust que carga y renderiza modelos OBJ con rasterización de triángulos, transformaciones 3D e iluminación básica.
+Motor de renderizado 3D por software desarrollado en Rust que permite visualizar archivos Wavefront OBJ mediante rasterización de triángulos, con soporte para transformaciones espaciales e iluminación dinámica.
 
-## Características
+## ✨ Funcionalidades Principales
 
-- **Carga de modelos OBJ**: Soporte completo para archivos Wavefront OBJ
-- **Rasterización de triángulos**: Implementación desde cero usando coordenadas barycéntricas
-- **Transformaciones 3D**: Traslación, rotación y escalado en tiempo real
-- **Z-Buffer**: Depth testing para renderizado correcto de profundidad
-- **Iluminación básica**: Sistema de iluminación direccional con normales
-- **Controles interactivos**: Navegación completa con teclado
+- **Importación de archivos OBJ**: Procesamiento completo de geometría en formato Wavefront
+- **Renderizado basado en triángulos**: Algoritmo de rasterización implementado con coordenadas baricéntricas
+- **Manipulación espacial 3D**: Movimiento, rotación y ajuste de escala en tiempo real
+- **Buffer de profundidad**: Algoritmo Z-Buffer para resolución de oclusión geométrica
+- **Sistema de iluminación**: Motor de iluminación con luz ambiente y difusa
+- **Interacción por mouse y teclado**: Control completo de cámara y transformaciones
 
-## Tecnologías
+## 🛠️ Stack Tecnológico
 
-- **Rust** - Lenguaje de programación principal
-- **nalgebra-glm** - Matemáticas 3D (vectores, matrices)
-- **minifb** - Creación de ventanas y manejo de framebuffer
-- **tobj** - Cargador de archivos OBJ
+- **Rust** - Lenguaje de sistemas para alto rendimiento
+- **nalgebra-glm** - Librería de álgebra lineal para gráficos 3D
+- **minifb** - Framework para gestión de ventanas y buffer de píxeles
+- **tobj** - Parser de archivos de geometría OBJ
+- **image** - Procesamiento y exportación de imágenes
 
-## Requisitos
+## 📋 Prerrequisitos
 
-- Rust 1.70 o superior
-- Archivo `CazeTie.obj` en la carpeta `assets/`
+- Rust 1.70 o versión posterior
+- Modelo 3D `CazaTie.obj` ubicado en el directorio `assets/`
 
-## Instalación y Ejecución
+## 🚀 Inicio Rápido
+
 ```bash
-# Clonar el repositorio
-git clone https://github.com/Albu231311/Modelo_nave.git
-cd Modelo_nave
+# Clonar este repositorio
+git clone https://github.com/Nery2004/Carga-de-modelos.git
+cd Carga-de-modelos
 
-# Compilar y ejecutar
+# Compilar y lanzar en modo optimizado
 cargo run --release
 ```
 
-## Controles
+## 🎮 Controles de Usuario
 
-| Tecla | Acción |
-|-------|--------|
-| `←→↑↓` | Mover nave |
-| `A/S` | Escalar (A = pequeño, S = grande) |
-| `Q/W` | Rotar en eje X |
-| `E/R` | Rotar en eje Y |
-| `T/Y` | Rotar en eje Z |
-| `ESC` | Salir |
+### Teclado
+| Control | Función |
+|---------|---------|
+| `Flechas` | Desplazar modelo en pantalla |
+| `A / S` | Reducir / Aumentar escala |
+| `Q / W` | Rotación en eje X (pitch) |
+| `E / R` | Rotación en eje Y (yaw) |
+| `T / Y` | Rotación en eje Z (roll) |
+| `ESC` | Cerrar aplicación |
 
-## Estructura del Proyecto
+### Mouse
+| Control | Función |
+|---------|---------|
+| `Botón izquierdo + Arrastrar` | Rotar modelo libremente |
+
+## 📁 Arquitectura del Proyecto
+
 ```
-proyecto-nave/
-├── Cargo.toml
+Carga-de-modelos/
+├── Cargo.toml              # Configuración de dependencias
 ├── assets/
-│   └── nave.obj          # Modelo 3D de la nave
+│   └── CazaTie.obj         # Archivo de geometría 3D
 └── src/
-    ├── main.rs           # Programa principal y loop de renderizado
-    ├── obj.rs            # Cargador de archivos OBJ
-    ├── vertex.rs         # Estructura de vértices
-    ├── triangle.rs       # Rasterización de triángulos
-    ├── shaders.rs        # Vertex shader y transformaciones
-    ├── framebuffer.rs    # Buffer de frame y Z-buffer
-    ├── fragment.rs       # Estructura de fragmentos
-    ├── color.rs          # Sistema de colores
-    └── line.rs           # Rasterización de líneas
+    ├── main.rs             # Ciclo principal de renderizado
+    ├── obj.rs              # Parser de archivos OBJ
+    ├── vertex.rs           # Definición de vértices
+    ├── triangle.rs         # Motor de rasterización
+    ├── shaders.rs          # Transformaciones de vértices
+    ├── framebuffer.rs      # Gestión de buffers de imagen
+    ├── fragment.rs         # Procesamiento de píxeles
+    ├── color.rs            # Manejo de colores RGB
+    └── line.rs             # Algoritmo de líneas
 ```
 
-## 🎯 Pipeline de Renderizado
+## 🔄 Flujo de Renderizado
 
-1. **Carga del modelo**: Lee archivo OBJ y extrae vértices e índices
-2. **Vertex Shader**: Aplica transformaciones 3D a cada vértice
-3. **Recorrido de caras**: Itera manualmente sobre índices de triángulos
-4. **Rasterización**: Convierte triángulos 3D a píxeles 2D
-5. **Fragment Shader**: Aplica iluminación y colores
-6. **Z-Buffer**: Determina visibilidad por profundidad
+El proceso de renderizado sigue estas etapas:
 
-## Implementación Técnica
+1. **Importación**: Lectura del archivo OBJ y construcción de malla de vértices
+2. **Transformación de vértices**: Aplicación de matrices de modelo-vista-proyección
+3. **Ensamblado de primitivas**: Construcción de triángulos a partir de índices
+4. **Rasterización**: Conversión de geometría vectorial a píxeles discretos
+5. **Sombreado de fragmentos**: Cálculo de color final con iluminación
+6. **Test de profundidad**: Resolución de visibilidad mediante Z-Buffer
 
-### Recorrido Manual de Caras
+## 💡 Detalles de Implementación
+
+### Procesamiento de Geometría
 ```rust
-// Cada 3 índices forman un triángulo
+// Iteración sobre cada triángulo de la malla
 for triangle_idx in (0..indices.len()).step_by(3) {
     let i1 = indices[triangle_idx] as usize;
     let i2 = indices[triangle_idx + 1] as usize; 
     let i3 = indices[triangle_idx + 2] as usize;
     
-    // Obtener vértices y renderizar triángulo
+    // Extraer vértices transformados
     let v1 = &transformed_vertices[i1];
     let v2 = &transformed_vertices[i2];
     let v3 = &transformed_vertices[i3];
     
+    // Generar fragmentos rasterizados
     let fragments = triangle(v1, v2, v3);
 }
 ```
 
-### Rasterización de Triángulos
-- **Bounding Box**: Optimización para reducir píxeles a procesar
-- **Coordenadas Barycéntricas**: Determinar si un píxel está dentro del triángulo
-- **Interpolación**: Suavizar normales y profundidad entre vértices
+### Algoritmo de Rasterización
+- **Delimitación espacial**: Cálculo de bounding box para optimizar procesamiento
+- **Test de inclusión**: Uso de coordenadas baricéntricas para determinar cobertura de píxeles
+- **Interpolación de atributos**: Suavizado de propiedades geométricas entre vértices
 
-### Sistema de Iluminación
-- **Luz direccional**: Simulación de luz solar/estelar
-- **Producto punto**: Cálculo de intensidad basado en normales
-- **Colores dinámicos**: Variación de brillo según orientación de superficie
+### Modelo de Iluminación
+- **Componente ambiental**: Iluminación base uniforme (50%)
+- **Componente difusa**: Cálculo mediante producto escalar de normales y dirección de luz
+- **Resultado final**: Combinación ponderada para iluminación equilibrada
 
-## Características Visuales
+## 🎨 Configuración Visual
 
-- **Fondo espacial**: Azul oscuro (#001122)
-- **Nave dorada**: Color base dorado con iluminación realista
-- **Sombreado**: Las caras orientadas hacia la luz se ven brillantes, las opuestas se ven oscuras
-- **FPS adaptativo**: Reduce automáticamente cuando hay mucha geometría en pantalla
+- **Entorno de fondo**: Tono azul espacial (#001122)
+- **Material del modelo**: Gris medio con respuesta de iluminación realista
+- **Modelo de sombreado**: Mezcla de luz ambiente y difusa para apariencia uniforme
+- **Sensibilidad de mouse**: Factor de 0.005 para rotación suave
 
+## 📸 Galería Visual
 
-## Capturas
 <img width="536" height="288" alt="nave2" src="https://github.com/user-attachments/assets/6702678a-9f49-46c0-9107-2449cda08f28" />
 <img width="536" height="288" alt="nave3" src="https://github.com/user-attachments/assets/e675634b-f8a3-4dd2-a5f7-469acb4d5039" />
 <img width="536" height="288" alt="image" src="https://github.com/user-attachments/assets/510c3f06-6358-4299-b56e-5e28de05274c" />
